@@ -435,7 +435,7 @@ def remaining_processes_alive():
 
 
 def canonicalize_bootstrap_address(addr: str):
-    """Canonicalizes Ray cluster bootstrap address to ip:port.
+    """Canonicalizes Ray cluster bootstrap address to host:port.
     Reads address from the environment if needed.
 
     This function should be used to process user supplied Ray cluster address,
@@ -447,7 +447,7 @@ def canonicalize_bootstrap_address(addr: str):
     if addr is None or addr == "auto":
         addr = get_ray_address_from_environment()
     try:
-        bootstrap_address = address_to_ip(addr)
+        bootstrap_address = resolve_ip_for_localhost(addr)
     except Exception:
         logger.exception(f"Failed to convert {addr} to host:port")
         raise
@@ -469,28 +469,27 @@ def extract_ip_port(bootstrap_address: str):
     return ip, port
 
 
-def address_to_ip(address: str):
-    """Convert a hostname to a numerical IP addresses in an address.
-
-    This should be a no-op if address already contains an actual numerical IP
-    address.
+def resolve_ip_for_localhost(address: str):
+    """Convert to a remotely reachable IP if the address is "localhost"
+            or "127.0.0.1". Otherwise do nothing.
 
     Args:
         address: This can be either a string containing a hostname (or an IP
             address) and a port or it can be just an IP address.
 
     Returns:
-        The same address but with the hostname replaced by a numerical IP
-            address.
+        The same address but with the local host replaced by remotely
+            reachable IP.
     """
     if not address:
         raise ValueError(f"Malformed address: {address}")
     address_parts = address.split(":")
-    ip_address = socket.gethostbyname(address_parts[0])
     # Make sure localhost isn't resolved to the loopback ip
-    if ip_address == "127.0.0.1":
+    if address_parts[0] == "127.0.0.1" or address_parts[0] == "localhost":
         ip_address = get_node_ip_address()
-    return ":".join([ip_address] + address_parts[1:])
+        return ":".join([ip_address] + address_parts[1:])
+    else:
+        return address
 
 
 def node_ip_address_from_perspective(address):
@@ -1566,7 +1565,7 @@ def start_raylet(redis_address,
     include_java = has_java_command and ray_java_installed
     if include_java is True:
         java_worker_command = build_java_worker_command(
-            redis_address,
+            gcs_address if use_gcs_for_bootstrap() else redis_address,
             plasma_store_name,
             raylet_name,
             redis_password,
@@ -1722,7 +1721,7 @@ def get_ray_jars_dir():
 
 
 def build_java_worker_command(
-        redis_address,
+        bootstrap_address,
         plasma_store_name,
         raylet_name,
         redis_password,
@@ -1733,7 +1732,7 @@ def build_java_worker_command(
     """This method assembles the command used to start a Java worker.
 
     Args:
-        redis_address (str): Redis address of GCS.
+        bootstrap_address (str): Bootstrap address of ray cluster.
         plasma_store_name (str): The name of the plasma store socket to connect
            to.
         raylet_name (str): The name of the raylet socket to create.
@@ -1746,8 +1745,8 @@ def build_java_worker_command(
         The command string for starting Java worker.
     """
     pairs = []
-    if redis_address is not None:
-        pairs.append(("ray.address", redis_address))
+    if bootstrap_address is not None:
+        pairs.append(("ray.address", bootstrap_address))
     pairs.append(("ray.raylet.node-manager-port",
                   "RAY_NODE_MANAGER_PORT_PLACEHOLDER"))
 
@@ -1787,7 +1786,7 @@ def build_cpp_worker_command(cpp_worker_options, bootstrap_address,
 
     Args:
         cpp_worker_options (list): The command options for CPP worker.
-        bootstrap_address (str): The bootstrap of the cluster.
+        bootstrap_address (str): The bootstrap address of the cluster.
         plasma_store_name (str): The name of the plasma store socket to connect
            to.
         raylet_name (str): The name of the raylet socket to create.
