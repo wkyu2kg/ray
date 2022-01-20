@@ -123,8 +123,6 @@ class GlobalStateAccessorTest : public ::testing::TestWithParam<bool> {
   // Timeout waiting for GCS server reply, default is 2s.
   const std::chrono::milliseconds timeout_ms_{2000};
   std::unique_ptr<boost::asio::io_service::work> work_;
-
-
 };
 
 TEST_P(GlobalStateAccessorTest, TestJobTable) {
