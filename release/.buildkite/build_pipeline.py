@@ -125,6 +125,7 @@ SERVE_NIGHTLY_TESTS = {
 
 CORE_DAILY_TESTS = {
     "~/ray/release/nightly_tests/nightly_tests.yaml": [
+        "k8s_dask_on_ray_large_scale_test_no_spilling",
         "dask_on_ray_large_scale_test_no_spilling",
         "dask_on_ray_large_scale_test_spilling",
         "pg_autoscaling_regression_test",
@@ -145,6 +146,10 @@ CORE_SCALABILITY_TESTS_DAILY = {
         "many_tasks",
         "many_pgs",
         "many_nodes",
+        "scheduling_test_many_0s_tasks_single_node",
+        "scheduling_test_many_0s_tasks_many_nodes",
+        "scheduling_test_many_5s_tasks_single_node",
+        "scheduling_test_many_5s_tasks_many_nodes",
     ],
 }
 
