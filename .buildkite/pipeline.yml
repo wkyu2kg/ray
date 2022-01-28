@@ -34,7 +34,8 @@
       --test_env=CI
       --test_env=RAY_CI_POST_WHEEL_TESTS=True
       python/ray/tests/... python/ray/serve/... python/ray/tune/... rllib/... doc/...
-    - cp -rf bazel-testlogs/ /tmp/artifacts/.bazel-testlogs && cp -rf /tmp/ray/ /tmp/artifacts/.ray-log
+  artifact_paths:
+    - /tmp/ray/**/*
 
 - label: ":ferris_wheel: Debug Wheels"
   conditions:
