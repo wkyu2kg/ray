@@ -13,8 +13,8 @@ if not os.environ.get("CI"):
 
 
 @pytest.mark.parametrize("field", ["conda", "pip"])
-@pytest.mark.parametrize("specify_env_in_init", [False, True])
 @pytest.mark.parametrize("spec_format", ["file", "python_object"])
+@pytest.mark.parametrize("specify_env_in_init", [False, True])
 def test_install_failure_logging(
     start_cluster, specify_env_in_init, field, spec_format, tmp_path, capsys
 ):
