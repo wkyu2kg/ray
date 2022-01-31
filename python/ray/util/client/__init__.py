@@ -276,7 +276,7 @@ class RayAPIStub:
         return ret
 
     def shutdown(self, *args, **kwargs):
-        global _lock, _all_contexts
+        global _lock, _all_contexts, _default_context
         with _lock:
             if _default_context == self.get_context():
                 for cxt in _all_contexts:
