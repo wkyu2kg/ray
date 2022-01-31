@@ -250,6 +250,8 @@ class RayAPIStub:
                 for cxt in _all_contexts:
                     cxt.disconnect(*args, **kw_args)
                 _all_contexts = set()
+                _default_context = _ClientContext()
+                self._cxt.handler = _default_context
             else:
                 self.get_context().disconnect(*args, **kw_args)
             if self.get_context() in _all_contexts:

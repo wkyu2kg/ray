@@ -41,9 +41,6 @@ def test_install_failure_logging(
             )
         return
 
-    # Wait until last run stopped completely.
-    from time import sleep
-    sleep(5)
     ray.init(address)
 
     @ray.remote(runtime_env=bad_envs["actor"])
