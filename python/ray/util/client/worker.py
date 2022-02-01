@@ -553,6 +553,9 @@ class Worker:
     def call_release(self, id: bytes) -> None:
         if self.closed:
             return
+        # This can happen when this id is from a different context than this one.
+        if id not in self.reference_count:
+            return
         self.reference_count[id] -= 1
         if self.reference_count[id] == 0:
             self._release_server(id)
@@ -576,6 +579,15 @@ class Worker:
         if self.channel:
             self.channel.close()
             self.channel = None
+        # reference count has to be reset here.
+        # TODO (yic): We need to associate client object ref with the context
+        # to avoid memory leak in multi-client mode for the following cases:
+        #   1. created an object ref (ref-1) in context 1
+        #   2. start a new client with context 2
+        #   3. delete the old object ref (ref-1)
+        #   4. old object ref's callback will try to call call_release in context 2
+        #   5. ref-1 will never be deleted in context 1
+        self.reference_count = defaultdict(int)
 
     def get_actor(
         self, name: str, namespace: Optional[str] = None
