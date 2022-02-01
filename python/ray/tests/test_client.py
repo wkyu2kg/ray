@@ -757,7 +757,6 @@ def test_init_requires_no_resources(call_ray_start, use_client):
 
     ray.get(f.remote())
 
-
 @pytest.mark.parametrize(
     "call_ray_start",
     ["ray start --head --ray-client-server-port 25553 --num-cpus 1"],
@@ -775,7 +774,9 @@ def test_object_ref_release(call_ray_start):
 
     del a
 
-    print(ray.util.client.ray.get_context().api.client_worker.reference_count)
+    with disable_client_hook():
+        ref_cnt = ray.util.client.ray.get_context().client_worker.reference_count
+        assert all(v > 0 for v in ref_cnt.values())
 
 
 if __name__ == "__main__":
