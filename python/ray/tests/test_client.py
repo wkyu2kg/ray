@@ -757,6 +757,7 @@ def test_init_requires_no_resources(call_ray_start, use_client):
 
     ray.get(f.remote())
 
+
 @pytest.mark.parametrize(
     "call_ray_start",
     ["ray start --head --ray-client-server-port 25553 --num-cpus 1"],
