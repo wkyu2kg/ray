@@ -1,0 +1,5 @@
+name: ray-dev
+dependencies:
+# dev environment
+  - cython=0.29.0
+  - pytest
