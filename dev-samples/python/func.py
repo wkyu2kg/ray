@@ -1,9 +1,8 @@
 import ray
 import time
 
-ray.init()
-#  ray.init(num_cpus=8, num_gpus=4, resources={'Custom': 2})
-
+#  ray.init()
+ray.init(num_cpus=8, resources={'Custom': 2})
 
 # A regular Python function.
 def my_function():
@@ -99,7 +98,7 @@ class Counter(object):
 counter = Counter.remote()
 
 # Specify required resources for an actor.
-@ray.remote(num_cpus=2, num_gpus=0.5)
+@ray.remote(num_cpus=4, num_gpus=0.5)
 class Actor(object):
     pass
 
@@ -108,7 +107,7 @@ obj_ref = counter.increment.remote()
 assert ray.get(obj_ref) == 1
 
 # Create ten Counter actors.
-counters = [Counter.remote() for _ in range(10)]
+counters = [Counter.remote() for _ in range(12)]
 
 # Increment each Counter once and get the results. These tasks all happen in
 # parallel.
@@ -117,7 +116,7 @@ print(results)  # prints [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
 # Increment the first Counter five times. These tasks are executed serially
 # and share state.
-results = ray.get([counters[0].increment.remote() for _ in range(5)])
+results = ray.get([counters[0].increment.remote() for _ in range(15)])
 print(results)  # prints [2, 3, 4, 5, 6]
 
 ray.shutdown()
