@@ -21,18 +21,18 @@ print('''This cluster consists of
 '''.format(len(ray.nodes()), ray.cluster_resources()['CPU']))
 
 # Create a placement group.
-pg = placement_group([{"CPU": 2}, {"CPU": 2}, {"CPU": 2}], strategy="STRICT_SPREAD", name="default_spread")
+pg = placement_group([{"CPU": 2}, {"CPU": 2}, {"CPU": 2}], strategy="STRICT_SPREAD", name="default_spread", lifetime=None)
 ray.get(pg.ready())
 
 pprint(placement_group_table(pg))
 print(pg.bundle_specs)
 
 
-@ray.remote
+@ray.remote(placement_group=pg)
 class Worker:
    def __init__(self):
-       self.send = np.ones((4, ), dtype=np.float32)
-       self.recv = np.zeros((4, ), dtype=np.float32)
+       self.send = np.ones((3, ), dtype=np.float32)
+       self.recv = np.zeros((3, ), dtype=np.float32)
 
    def setup(self, world_size, rank):
        collective.init_collective_group(world_size, rank, "gloo", "default")
@@ -53,6 +53,7 @@ init_rets = []
 # declarative
 for i in range(num_workers):
    w = Worker.options(placement_group=pg).remote()
+#   w = Worker.remote()
    workers.append(w)
 _options = {
    "group_name": "default",
@@ -62,3 +63,8 @@ _options = {
 }
 collective.create_collective_group(workers, **_options)
 results = ray.get([w.compute.remote() for w in workers])
+
+remove_placement_group(pg)
+pprint(placement_group_table(pg))
+
+ray.shutdown()
