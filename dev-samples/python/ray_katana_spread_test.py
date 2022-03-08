@@ -9,6 +9,7 @@ from pprint import pprint
 import socket
 import time
 
+
 # Import placement group APIs.
 from ray.util.placement_group import (
     placement_group,
@@ -36,21 +37,23 @@ class Worker:
        return True
 
    def compute(self):
+       import katana.distributed
+
        print(socket.gethostname())
        collective.allreduce(self.send, "default")
        return self.send
 
    def destroy(self):
-       collective.destroy_group()
+       collective.destroy_collective_group()
 
 def test_gluon_vector_comm():
-    ctx = ray.init(namespace="gluon", address="auto")
+    #ctx = ray.init(namespace="gluon", address="auto")
+    ctx = ray.init(namespace='coll', address='auto', _redis_password='5241590000000000', runtime_env={"env_vars": {"PYTHONPATH": "/home/wkyu/katana/master/external/katana/katana_python_build/build/lib.linux-x86_64-3.8:/home/wkyu/katana/master/external/katana/katana_python_build/python:/home/wkyu/katana/master/katana_enterprise_python_build/build/lib.linux-x86_64-3.8:/home/wkyu/katana/master/katana_enterprise_python_build/python:/home/wkyu/katana/master/external/katana/katana_python_build/build/lib.linux-x86_64-3.8:/home/wkyu/katana/master/external/katana/katana_python_build/python:/home/wkyu/katana/katana-enterprise-master/python/test"}})
+
     print(ray.get_runtime_context().namespace)
 
     num_workers = 3
     workers = []
-    init_rets = []
-
     # Create a placement group.
     pg = placement_group([{"CPU": 2}, {"CPU": 2}, {"CPU": 2}], strategy="STRICT_SPREAD", name="default_spread", lifetime=None)
     ray.get(pg.ready())
@@ -69,6 +72,7 @@ def test_gluon_vector_comm():
     }
     collective.create_collective_group(workers, **_options)
     results = ray.get([w.compute.remote() for w in workers])
+    results = ray.get([w.destroy.remote() for w in workers])
 
     remove_placement_group(pg)
     pprint(placement_group_table(pg))
