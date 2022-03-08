@@ -33,7 +33,7 @@ class Worker:
        return self.send
 
    def destroy(self):
-       collective.destroy_group()
+       collective.destroy_collective_group()
 
    def graph_vector(self, datasource):
        tester_graph = self.graph
@@ -97,7 +97,6 @@ class Worker:
 # imperative
 num_workers = 2
 workers = []
-init_rets = []
 
 def test_gluon_vector_comm(datasource):
     for i in range(num_workers):
@@ -115,6 +114,7 @@ def test_gluon_vector_comm(datasource):
 
     # XXX: invoke additional out-of-band tasks for synchronization
     results = ray.get([w.compute.remote() for w in workers])
+    results = ray.get([w.destroy.remote() for w in workers])
 
 
 ray.shutdown()

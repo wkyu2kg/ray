@@ -40,9 +40,12 @@ class Worker:
        collective.allreduce(self.send, "default")
        return self.send
 
+   def destroy(self):
+       collective.destroy_collective_group()
+
+
 num_workers = 2
 workers = []
-init_rets = []
 tester_graph = ds.rdg_dataset_url("gnn_tester", "local")
 
 def test_gluon_vector_comm():
@@ -57,5 +60,6 @@ def test_gluon_vector_comm():
     }
     collective.create_collective_group(workers, **_options)
     results = ray.get([w.compute.remote() for w in workers])
+    results = ray.get([w.destroy.remote() for w in workers])
 
 ray.shutdown()
