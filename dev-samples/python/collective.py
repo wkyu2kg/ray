@@ -20,13 +20,22 @@ class Worker:
        return self.send
 
    def destroy(self):
-       collective.destroy_group()
+       collective.destroy_collective_group()
 
+# imperative
 num_workers = 2
-workers = []
+imp_workers = []
 init_rets = []
+for i in range(num_workers):
+   w = Worker.remote()
+   imp_workers.append(w)
+   init_rets.append(w.setup.remote(num_workers, i))
+_ = ray.get(init_rets)
+results = ray.get([w.compute.remote() for w in imp_workers])
+results = ray.get([w.destroy.remote() for w in imp_workers])
 
 # declarative
+workers = []
 for i in range(num_workers):
    w = Worker.remote()
    workers.append(w)
@@ -38,3 +47,6 @@ _options = {
 }
 collective.create_collective_group(workers, **_options)
 results = ray.get([w.compute.remote() for w in workers])
+results = ray.get([w.destroy.remote() for w in workers])
+
+ray.shutdown()
