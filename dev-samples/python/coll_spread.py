@@ -44,13 +44,10 @@ class Worker:
        return self.send
 
    def destroy(self):
-       collective.destroy_group()
+       collective.destroy_collective_group()
 
 num_workers = 3
 workers = []
-init_rets = []
-
-# declarative
 for i in range(num_workers):
    w = Worker.options(placement_group=pg).remote()
 #   w = Worker.remote()
@@ -63,6 +60,7 @@ _options = {
 }
 collective.create_collective_group(workers, **_options)
 results = ray.get([w.compute.remote() for w in workers])
+results = ray.get([w.destroy.remote() for w in workers])
 
 remove_placement_group(pg)
 pprint(placement_group_table(pg))
